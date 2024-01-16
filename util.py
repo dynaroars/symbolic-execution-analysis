@@ -26,7 +26,7 @@ def my_symbolic_execution(dnn: Sequential):
     first_layer = layers[0]
     weights, _ = get_info(first_layer)
     num_inputs = len(weights)
-    input_list = [z3.Real('i' + str(i)) for i in range(num_inputs)]
+    input_list = [z3.Real('X_' + str(i)) for i in range(num_inputs)]
 
     # Iterate through layers to determine the neurons in each layer
     for index in range(len(layers) - 1):
@@ -57,7 +57,7 @@ def my_symbolic_execution(dnn: Sequential):
     last_layer = layers[-1]
     weights, bias = get_info(last_layer)
     num_outputs = len(weights[0])
-    output_list = [z3.Real('o' + str(i)) for i in range(num_outputs)]
+    output_list = [z3.Real('Y_' + str(i)) for i in range(num_outputs)]
 
     for i in range(len(output_list)):
         # Find the sum weights of the final outputs

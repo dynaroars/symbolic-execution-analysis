@@ -4,10 +4,12 @@ from keras import activations
 import tensorflow as tf
 import z3
 
-def read_spec(filename: str):
+def read_spec(filename: str = "acasxu/spec/prop_1.vnnlib"):
     file = open(filename)
     variable_dict = dict()
-    constraint_list = []
+    pre_list = []
+    post_list = []
+
     for line in file:
         line = line.strip()
 
@@ -29,12 +31,20 @@ def read_spec(filename: str):
             else:
                 value = eval(value)
             if op == ">=":
-                constraint_list.append(variable_dict[variable_name] >= value)
+                if variable_name.startswith("X"):
+                    change_list = pre_list
+                elif variable_name.startswith("Y"):
+                    change_list = post_list
+                change_list.append(variable_dict[variable_name] >= value)
             elif op == "<=":
-                constraint_list.append(variable_dict[variable_name] >= value)
+                if variable_name.startswith("X"):
+                    change_list = pre_list
+                elif variable_name.startswith("Y"):
+                    change_list = post_list
+                change_list.append(variable_dict[variable_name] <= value)
 
     file.close()
-    return z3.And(constraint_list)
+    return (z3.And(pre_list), z3.And(post_list))
 
 def readNNet(filename: str) -> Sequential:
     """
