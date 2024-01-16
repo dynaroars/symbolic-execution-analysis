@@ -24,15 +24,17 @@ def read_spec(filename: str):
                 variable_dict[variable_name] = z3.Real(variable_name)
         elif line.startswith("assert"):
             op, variable_name, value = line[8:-1].split()
+            if value.startswith("X") or value.startswith("Y"):
+                value = variable_dict[value]
+            else:
+                value = eval(value)
             if op == ">=":
-                constraint_list.append(variable_dict[variable_name] >= eval(value))
+                constraint_list.append(variable_dict[variable_name] >= value)
             elif op == "<=":
-                constraint_list.append(variable_dict[variable_name] >= eval(value))
+                constraint_list.append(variable_dict[variable_name] >= value)
 
     file.close()
     return z3.And(constraint_list)
-
-print(read_spec('acasxu/spec/prop_1.vnnlib'))
 
 def readNNet(filename: str) -> Sequential:
     """
