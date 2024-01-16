@@ -4,7 +4,7 @@ import time
 import z3
 
 # Capture statistics
-REPETITION = 1
+REPETITION = 10
 
 def run_random(layers: [int], interval: [int] = [-5, 5]):
     output_file = open("runtime.txt", "a")
@@ -48,7 +48,24 @@ def run_acasxu():
 
     output_file.close()
 
-run_random([5, 10, 5], [-2, 2])
-run_random([5, 10, 10, 5], [-2, 2])
+
+# Different number of nodes per layer
 run_random([5, 10, 10, 10, 5], [-2, 2])
+run_random([5, 20, 20, 20, 5], [-2, 2])
+run_random([5, 30, 30, 30, 5], [-2, 2])
+run_random([5, 40, 40, 40, 5], [-2, 2])
+
+# Different number of layers
+run_random([5, 20, 5], [-2, 2])
+run_random([5, 20, 20, 5], [-2, 2])
+run_random([5, 20, 20, 20, 5], [-2, 2])
+run_random([5, 20, 20, 20, 20, 5], [-2, 2])
+
+# Different random interval
+run_random([5, 20, 20, 20, 5], [-2, 2])
+run_random([5, 20, 20, 20, 5], [-10, 10])
+run_random([5, 20, 20, 20, 5], [-20, 20])
+run_random([5, 20, 20, 20, 5], [-30, 30])
+
+# Check ACAS Xu
 run_acasxu()
