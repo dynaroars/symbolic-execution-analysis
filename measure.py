@@ -53,22 +53,22 @@ def run_acasxu():
 
 def main():
     # Different number of nodes per layer
-    run_random([5, 10, 5], [-2, 2])
-    run_random([5, 20, 5], [-2, 2])
-    run_random([5, 30, 5], [-2, 2])
-    run_random([5, 40, 5], [-2, 2])
+    run_random([5, 10, 10, 5], [-2, 2])
+    run_random([5, 20, 20, 5], [-2, 2])
+    run_random([5, 30, 30, 5], [-2, 2])
+    run_random([5, 40, 40, 5], [-2, 2])
 
     # Different number of layers
-    run_random([5, 10, 5], [-2, 2])
-    run_random([5, 10, 10, 5], [-2, 2])
-    run_random([5, 10, 10, 10, 5], [-2, 2])
-    run_random([5, 10, 10, 10, 10, 5], [-2, 2])
+    run_random([5, 15, 5], [-2, 2])
+    run_random([5, 15, 15, 5], [-2, 2])
+    run_random([5, 15, 15, 15, 5], [-2, 2])
+    run_random([5, 15, 15, 15, 15, 5], [-2, 2])
 
     # Different random interval
-    run_random([5, 10, 10, 5], [-2, 2])
-    run_random([5, 10, 10, 5], [-5, 5])
-    run_random([5, 10, 10, 5], [-10, 10])
-    run_random([5, 10, 10, 5], [-15, 15])
+    run_random([5, 15, 15, 5], [-2, 2])
+    run_random([5, 15, 15, 5], [-5, 5])
+    run_random([5, 15, 15, 5], [-10, 10])
+    run_random([5, 15, 15, 5], [-15, 15])
 
     # Check ACAS Xu
     run_acasxu()
