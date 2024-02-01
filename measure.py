@@ -94,8 +94,9 @@ def main():
     # run_acasxu()
 
     # Run part of ACAS Xu
-    run_part_acasxu("acasxu/small-makeup.nnet")
-    run_part_acasxu("acasxu/big-makeup.nnet")
+    run_part_acasxu('acasxu/makeup-2.nnet')
+    run_part_acasxu('acasxu/makeup-3.nnet')
+    run_part_acasxu('acasxu/makeup-4.nnet')
 
 if __name__ == '__main__':
     main()
