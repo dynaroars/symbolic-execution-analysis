@@ -5,13 +5,14 @@ import z3
 
 # Capture statistics
 REPETITION = 5
-TIMEOUT = 1800 * 6 * 1000 # Set timeout of 30 minutes
+TIMEOUT = 3600 * 1000 # Set timeout of 30 minutes
 
-def run_random(layers: [int], interval: [int] = [-5, 5]):
+def run_random(layers, interval = [-5, 5]):
     output_file = open("runtime.txt", "a")
     output_file.write(f"layers = {layers}, interval = {interval}\n")
     total = 0
-    for _ in range(REPETITION):
+    count = 0
+    while count < REPETITION:
         dnn = create_random(layers, interval)
         symbolic_states = my_symbolic_execution(dnn)
         pre, post = read_spec("acasxu/spec/prop_1.vnnlib")
@@ -23,6 +24,10 @@ def run_random(layers: [int], interval: [int] = [-5, 5]):
         # Calculate the solving time
         start = time.time()
         result = solver.check()
+        if str(result) == "sat":
+            continue
+
+        count += 1
         duration = time.time() - start
         total += duration
         output_file.write(f"{result}, {duration}\n")
@@ -73,30 +78,25 @@ def run_part_acasxu(filename):
 
 def main():
     # Different number of nodes per layer
-    # run_random([5, 10, 10, 5], [-2, 2])
-    # run_random([5, 20, 20, 5], [-2, 2])
-    # run_random([5, 30, 30, 5], [-2, 2])
-    # run_random([5, 40, 40, 5], [-2, 2])
+    run_random([5, 5, 5, 5], [-2, 2])
+    run_random([5, 10, 10, 5], [-2, 2])
+    run_random([5, 15, 15, 5], [-2, 2])
+    run_random([5, 20, 20, 5], [-2, 2])
+    run_random([5, 25, 25, 5], [-2, 2])
 
     # Different number of layers
-    # run_random([5, 15, 5], [-2, 2])
-    # run_random([5, 15, 15, 5], [-2, 2])
-    # run_random([5, 15, 15, 15, 5], [-2, 2])
-    # run_random([5, 15, 15, 15, 15, 5], [-2, 2])
-
-    # Different random interval
-    # run_random([5, 15, 15, 5], [-2, 2])
-    # run_random([5, 15, 15, 5], [-5, 5])
-    # run_random([5, 15, 15, 5], [-10, 10])
-    # run_random([5, 15, 15, 5], [-15, 15])
+    run_random([5, 8, 5], [-2, 2])
+    run_random([5, 8, 8, 5], [-2, 2])
+    run_random([5, 8, 8, 8, 5], [-2, 2])
+    run_random([5, 8, 8, 8, 8, 5], [-2, 2])
 
     # Check ACAS Xu
     # run_acasxu()
 
     # Run part of ACAS Xu
-    run_part_acasxu('acasxu/makeup-2.nnet')
-    run_part_acasxu('acasxu/makeup-3.nnet')
-    run_part_acasxu('acasxu/makeup-4.nnet')
+    # run_part_acasxu('acasxu/makeup-2.nnet')
+    # run_part_acasxu('acasxu/makeup-3.nnet')
+    # run_part_acasxu('acasxu/makeup-4.nnet')
 
 if __name__ == '__main__':
     main()
