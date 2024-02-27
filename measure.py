@@ -27,10 +27,20 @@ def run_random(layers, interval = [-5, 5]):
         if str(result) == "sat":
             continue
 
+            
         count += 1
         duration = time.time() - start
-        total += duration
-        output_file.write(f"{result}, {duration}\n")
+
+        # Repeat the same random DNN to make sure the runtime doesn't vary too much
+        runtimes = [duration]
+        for i in range(4):
+            start = time.time()
+            solver.check()
+            duration = time.time() - start
+            runtimes.append(duration)
+        total += sum(runtimes) / len(runtimes)
+        runtimes = [str(i) for i in runtimes]
+        output_file.write(f"{result}, {'--'.join(runtimes)}\n")
 
     output_file.write(f"total: {total}, average: {total / REPETITION}\n")
     output_file.write("----------------------------\n\n")
