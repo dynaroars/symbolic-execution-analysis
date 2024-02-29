@@ -24,20 +24,16 @@ def run_random(layers, interval = [-5, 5]):
         # Calculate the solving time
         start = time.time()
         result = solver.check()
-        if str(result) == "sat":
-            continue
-
-            
         count += 1
         duration = time.time() - start
 
         # Repeat the same random DNN to make sure the runtime doesn't vary too much
         runtimes = [duration]
-        for i in range(4):
-            start = time.time()
-            solver.check()
-            duration = time.time() - start
-            runtimes.append(duration)
+        # for i in range(4):
+        #     start = time.time()
+        #     solver.check()
+        #     duration = time.time() - start
+        #     runtimes.append(duration)
         total += sum(runtimes) / len(runtimes)
         runtimes = [str(i) for i in runtimes]
         output_file.write(f"{result}, {'--'.join(runtimes)}\n")
@@ -88,17 +84,17 @@ def run_part_acasxu(filename):
 
 def main():
     # Different number of nodes per layer
-    run_random([5, 5, 5, 5], [-2, 2])
-    run_random([5, 10, 10, 5], [-2, 2])
-    run_random([5, 15, 15, 5], [-2, 2])
-    run_random([5, 20, 20, 5], [-2, 2])
-    run_random([5, 25, 25, 5], [-2, 2])
+    # run_random([5, 5, 5, 5], [-2, 2])
+    # run_random([5, 10, 10, 5], [-2, 2])
+    # run_random([5, 15, 15, 5], [-2, 2])
+    # run_random([5, 20, 20, 5], [-2, 2])
+    # run_random([5, 25, 25, 5], [-2, 2])
 
     # Different number of layers
-    run_random([5, 8, 5], [-2, 2])
-    run_random([5, 8, 8, 5], [-2, 2])
-    run_random([5, 8, 8, 8, 5], [-2, 2])
-    run_random([5, 8, 8, 8, 8, 5], [-2, 2])
+    # run_random([5, 8, 5], [-2, 2])
+    # run_random([5, 8, 8, 5], [-2, 2])
+    # run_random([5, 8, 8, 8, 5], [-2, 2])
+    run_random([5, 10, 10, 10 ,10 ,10 , 5], [-2, 2])
 
     # Check ACAS Xu
     # run_acasxu()
