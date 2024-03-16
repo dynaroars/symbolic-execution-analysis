@@ -2,9 +2,8 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras import activations
 import tensorflow as tf
-import z3
 
-def read_spec(filename: str = "acasxu/spec/prop_1.vnnlib"):
+def read_spec(library, filename= "acasxu/spec/prop_1.vnnlib"):
     file = open(filename)
     variable_dict = dict()
     pre_list = []
@@ -23,7 +22,7 @@ def read_spec(filename: str = "acasxu/spec/prop_1.vnnlib"):
             variable_name = parse_line[1]
             type = parse_line[2]
             if type == "Real":
-                variable_dict[variable_name] = z3.Real(variable_name)
+                variable_dict[variable_name] = library.Real(variable_name)
         elif line.startswith("assert"):
             op, variable_name, value = line[8:-1].split()
             if value.startswith("X") or value.startswith("Y"):
@@ -44,7 +43,7 @@ def read_spec(filename: str = "acasxu/spec/prop_1.vnnlib"):
                 change_list.append(variable_dict[variable_name] <= value)
 
     file.close()
-    return (z3.And(pre_list), z3.And(post_list))
+    return (library.And(pre_list), library.And(post_list))
 
 def readNNet(filename: str) -> Sequential:
     """

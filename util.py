@@ -1,125 +1,72 @@
-from keras.models import Sequential
-from keras.layers import Dense
-from keras import activations
-import tensorflow as tf
-import z3
-import random
+from symbolic_execution import generate_symbolic_execution, create_random
+from acasxu import read_spec, readNNet
+import time
 
-def get_info(layer: Dense):
-    """
-    Extract weights and bias from a layer
-    """
-    weights = layer.kernel_initializer.value
-    bias = layer.bias_initializer.value
-    return (weights, bias)
+REPETITION = 5
+TIMEOUT = 3600 * 1000 # Set timeout of 30 minutes
 
-def my_symbolic_execution(dnn: Sequential):
-    """
-    Return symbolic states from a dnn
-    Args:
-        dnn (type: Sequential)
-    """
-    constraint_list = []
-    layers = dnn.layers
+def run_random(library, layers, interval = [-5, 5]):
+    output_file = open("runtime.txt", "a")
+    output_file.write(f"library = {library.__name__}, layers = {layers}, interval = {interval}\n")
+    total = 0
+    count = 0
+    while count < REPETITION:
+        dnn = create_random(layers, interval)
+        symbolic_states = generate_symbolic_execution(dnn, library)
+        pre, post = read_spec(library, "acasxu/spec/prop_1.vnnlib")
+        symbolic_expr = library.And([symbolic_states, pre, post])
+        result, duration = solve_model(library, symbolic_expr)
 
-    # Extract info from the first layer to define a list of inputs
-    first_layer = layers[0]
-    weights, _ = get_info(first_layer)
-    num_inputs = len(weights)
-    input_list = [z3.Real('X_' + str(i)) for i in range(num_inputs)]
+        if result == "sat":
+            continue
 
-    # Iterate through layers to determine the neurons in each layer
-    for index in range(len(layers) - 1):
-        # Get the layer info
-        layer = layers[index]
-        weights, bias = get_info(layer)
-        num_neurons = len(weights[0])
+        count += 1
+        # Repeat the same random DNN to make sure the runtime doesn't vary too much
+        runtimes = [duration]
+        for _ in range(4):
+            _, duration = solve_model(library, symbolic_expr)
+            runtimes.append(duration)
 
-        # Define the neuron list
-        neuron_list = [z3.Real('n' + str(index) + '_' + str(x)) for x in range(num_neurons)]
-        for i in range(len(neuron_list)):
-            # Find the sum weights of a neuron
-            total = weights[0][i] * input_list[0]
-            for input in range(1, len(input_list)):
-                total += (weights[input][i] * input_list[input])
+        total += sum(runtimes) / len(runtimes)
+        runtimes = [str(i) for i in runtimes]
+        output_file.write(f"{result}, {'--'.join(runtimes)}\n")
 
-            # Add bias and clean up the formula
-            total += bias[i][0]
-            total = z3.simplify(total)
+    output_file.write(f"total: {total}, average: {total / REPETITION}\n")
+    output_file.write("----------------------------\n\n")
+    output_file.close()
 
-            # Append the constraint into the list
-            constraint_list.append(neuron_list[i] == z3.If(total <= 0, 0, total))
+def run_acasxu(library):
+    output_file = open("runtime.txt", "a")
+    output_file.write(f"library = {library.__name__}, ACASXU\n")
 
-        # The current neuron list becomes the inputs for the next layer
-        input_list = neuron_list
+    dnn = readNNet("acasxu/nnet/ACASXU_run2a_1_1_batch_2000.nnet")
+    states = generate_symbolic_execution(dnn)
+    pre, post = read_spec("acasxu/spec/prop_1.vnnlib")
+    f = library.And([states, pre, post])
+    result, duration = solve_model(library, f)
+    output_file.write(f"{result}, {duration}\n")
+    output_file.write("----------------------------\n\n")
 
-    # Extract info from the last layer to define a list of outputs
-    last_layer = layers[-1]
-    weights, bias = get_info(last_layer)
-    num_outputs = len(weights[0])
-    output_list = [z3.Real('Y_' + str(i)) for i in range(num_outputs)]
+    output_file.close()
 
-    for i in range(len(output_list)):
-        # Find the sum weights of the final outputs
-        total = weights[0][i] * input_list[0]
-        for input in range(1, len(input_list)):
-            total += (weights[input][i] * input_list[input])
-        total += bias[i][0]
-        total = z3.simplify(total)
+def solve_model(library, symbolic_expression):
+    solver = library.Solver()
+    solver.add(symbolic_expression)
+    start = time.time()
+    result = solver.check()
+    duration = time.time() - start
+    return result, duration    
 
-        # Append the outputs into the list
-        constraint_list.append(output_list[i] == total)
+def run_part_acasxu(library, filename):
+    output_file = open("runtime.txt", "a")
+    output_file.write(f"library = {library.__name__}, ACASXU-{filename}\n")
 
-    return z3.And(constraint_list)
+    dnn = readNNet(filename)
+    states = generate_symbolic_execution(dnn)
+    pre, post = read_spec("acasxu/spec/prop_1.vnnlib")
+    f = library.And([states, pre, post])
+    result, duration = solve_model(library, f)
+    output_file.write(f"{result}, {duration}\n")
+    output_file.write("----------------------------\n\n")
 
-def create_random(layers: [int], interval: [int] = [-5, 5]) -> Sequential:
-    """
-    Create a DNN with random weights and biases from provided layers and intervals for random float number
-    Args:
-        layers: a list of number of neurons
-        interval: a number interval
-    """
-    inputs = layers[0]
-    model = Sequential()
-    prev_nodes = inputs
-    for i in range(1, len(layers)):
-        nodes = layers[i]
-
-        # set up weights and bias
-        weights = []
-        bias = []
-        for _ in range(prev_nodes):
-            curr = []
-            for _ in range(nodes):
-                curr.append(random.uniform(interval[0], interval[1]))
-            weights.append(curr)
-        for _ in range(nodes):
-            bias.append([random.uniform(interval[0], interval[1])])
-
-        # set up inputs for first hidden layer
-        if i == 1:
-            dense = Dense(units = nodes,
-                      input_shape = (inputs, ),
-                      kernel_initializer = tf.constant_initializer(weights),
-                      bias_initializer = tf.constant_initializer(bias),
-                      dtype='float64')
-        # the output layer has no activation function
-        elif i == len(layers) - 1:
-            dense = Dense(units = nodes,
-                activation = None,
-                kernel_initializer = tf.constant_initializer(weights),
-                bias_initializer = tf.constant_initializer(bias),
-                dtype='float64')
-        # the rest
-        else:
-            dense = Dense(units = nodes,
-                activation = activations.relu,
-                kernel_initializer = tf.constant_initializer(weights),
-                bias_initializer = tf.constant_initializer(bias),
-                dtype='float64')
-
-        # update the previous number of nodes
-        prev_nodes = nodes
-        model.add(dense)
-
-    return model
+    output_file.close()
