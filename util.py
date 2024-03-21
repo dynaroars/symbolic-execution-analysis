@@ -53,6 +53,7 @@ def solve_model(library, symbolic_expression):
     solver = library.Solver()
     solver.add(symbolic_expression)
     start = time.time()
+    solver.set("timeout", TIMEOUT)
     result = solver.check()
     duration = time.time() - start
     return result, duration    

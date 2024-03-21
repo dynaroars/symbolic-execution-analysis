@@ -42,8 +42,17 @@ def read_spec(library, filename= "acasxu/spec/prop_1.vnnlib"):
                     change_list = post_list
                 change_list.append(variable_dict[variable_name] <= value)
 
+    if len(pre_list) > 1:
+        pre_list = library.And(pre_list)
+    else:
+        pre_list = pre_list[0]
+    if len(post_list) > 1:
+        post_list = library.And(post_list)
+    else:
+        post_list = post_list[0]
+
     file.close()
-    return (library.And(pre_list), library.And(post_list))
+    return (pre_list, post_list)
 
 def readNNet(filename: str) -> Sequential:
     """

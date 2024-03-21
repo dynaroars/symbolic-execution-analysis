@@ -1,5 +1,5 @@
 from util import *
-import cvc5
+import cvc5.pythonic as cvc5
 
 # Try cvc5 vs z3 vs dReal
 # Open Github issues to discuss about runtime variety
