@@ -1,9 +1,11 @@
 from symbolic_execution import generate_symbolic_execution, create_random
 from acasxu import read_spec, readNNet
 import time
+import cvc5.pythonic as cvc5
+import z3
 
 REPETITION = 5
-TIMEOUT = 3600 * 1000 # Set timeout of 30 minutes
+TIMEOUT = 2700 * 1000 # Set timeout of 45 minutes
 
 def run_random(library, layers, interval = [-5, 5]):
     output_file = open("runtime.txt", "a")
@@ -16,8 +18,7 @@ def run_random(library, layers, interval = [-5, 5]):
         pre, post = read_spec(library, "acasxu/spec/prop_1.vnnlib")
         symbolic_expr = library.And([symbolic_states, pre, post])
         result, duration = solve_model(library, symbolic_expr)
-
-        if result == "sat":
+        if str(result) == "sat":
             continue
 
         count += 1
@@ -51,9 +52,14 @@ def run_acasxu(library):
 
 def solve_model(library, symbolic_expression):
     solver = library.Solver()
+    print(type(solver), isinstance(solver, z3.Solver))
+    if isinstance(solver, cvc5.Solver):
+        solver.setOption("tlimit-per", TIMEOUT)
+    elif isinstance(solver, z3.Solver):
+        solver.set("timeout", TIMEOUT)
+
     solver.add(symbolic_expression)
     start = time.time()
-    solver.set("timeout", TIMEOUT)
     result = solver.check()
     duration = time.time() - start
     return result, duration    
