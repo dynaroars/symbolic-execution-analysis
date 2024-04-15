@@ -1,7 +1,7 @@
 import gurobipy as gp
 from keras.models import Sequential
 from keras.layers import Dense
-from symbolic_execution import generate_symbolic_execution, create_random
+from symbolic_execution import create_random
 import time
 
 def get_info(layer: Dense):
@@ -34,8 +34,6 @@ def gurobi_read_spec(var_dict, model: gp.Model, filename="acasxu/spec/prop_1.vnn
             if op == ">=":
                 model.addConstr(var_dict[variable_name] >= value)
             elif op == "<=":
-                print(model.getVars())
-                print(variable_name)
                 model.addConstr(var_dict[variable_name] <= value)
 
     file.close()
@@ -83,7 +81,7 @@ def gurobi_generate_symbolic_execution(dnn: Sequential, model: gp.Model):
 
             t = model.addVar(vtype='C', lb = -gp.GRB.INFINITY)
             model.addConstr(t == total)
-            # total = library.simplify(total)
+
             # Append the constraint into the list
             model.addGenConstrMin(neuron_list[i], [t, 0])
 
@@ -113,16 +111,74 @@ def gurobi_generate_symbolic_execution(dnn: Sequential, model: gp.Model):
         model.addConstr(output_list[i] == total)
 
     return var_dict
-dnn = create_random([5, 25, 25, 25, 25, 5])
 
-t = []
-for i in range(1):
-    model = gp.Model()
-    model.Params.TimeLimit = 20
-    var_dict = gurobi_generate_symbolic_execution(dnn, model)
-    gurobi_read_spec(var_dict, model)
-    start = time.time()
-    model.optimize()
-    t.append(time.time() - start)
-    print(model.SolCount)
-    model.display()
+REPETITION = 5
+TIMEOUT = 2700 * 1000 # Set timeout of 45 minutes
+
+def run_random(layers, interval = [-5, 5]):
+    output_file = open("runtime.txt", "a")
+    output_file.write(f"library = gurobi, layers = {layers}, interval = {interval}\n")
+    total = 0
+    count = 0
+
+    while count < REPETITION:
+        dnn = create_random(layers, interval)
+
+        # Prepare the gurobi model
+        model = gp.Model()
+        model.Params.TimeLimit = TIMEOUT
+        var_dict = gurobi_generate_symbolic_execution(dnn, model)
+        gurobi_read_spec(var_dict, model)
+
+        # Solve
+        start = time.time()
+        model.optimize()
+        duration = time.time() - start
+
+        if model.SolCount > 0:
+            continue
+
+        count += 1
+        # Repeat the same random DNN to make sure the runtime doesn't vary too much
+        runtimes = [duration]
+        for _ in range(4):
+            # Prepare the gurobi model
+            model = gp.Model()
+            model.Params.TimeLimit = TIMEOUT
+            var_dict = gurobi_generate_symbolic_execution(dnn, model)
+            gurobi_read_spec(var_dict, model)
+
+            # Solve
+            start = time.time()
+            model.optimize()
+            duration = time.time() - start
+
+            runtimes.append(duration)
+
+        total += sum(runtimes) / len(runtimes)
+        runtimes = [str(i) for i in runtimes]
+        output_file.write(f"{'--'.join(runtimes)}\n")
+
+    output_file.write(f"total: {total}, average: {total / REPETITION}\n")
+    output_file.write("----------------------------\n\n")
+    output_file.close()
+
+    output_file.close()
+
+def main():
+    # Different number of nodes per layer
+    run_random([5, 15, 15, 5])
+    run_random([5, 20, 20, 5])
+    run_random([5, 25, 25, 5])
+
+    # Different number of layers
+    run_random([5, 8, 5])
+    run_random([5, 8, 8, 5])
+    run_random([5, 8, 8, 8, 5])
+    run_random([5, 25, 25, 25, 25, 5])
+
+    # Test hard
+    run_random([5, 25, 25, 25, 25, 25, 25, 5])
+
+if __name__ == '__main__':
+    main()
