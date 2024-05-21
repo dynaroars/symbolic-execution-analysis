@@ -20,5 +20,10 @@ def main():
     run_random(z3, [5, 8, 8, 8, 5], [-2, 2])
     run_random(z3, [5, 25, 25, 25, 25, 5], [-2, 2])
 
+    # Run part of ACAS Xu
+    run_acasxu(z3) # Entire ACAS Xu
+    run_acasxu(z3, 3) # 3 hidden layers
+    run_acasxu(z3, 4) # 4 hidden layers
+
 if __name__ == '__main__':
     main()

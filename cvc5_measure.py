@@ -20,5 +20,10 @@ def main():
     run_random(cvc5, [5, 8, 8, 8, 5], [-2, 2])
     run_random(cvc5, [5, 25, 25, 25, 25, 5], [-2, 2])
 
+    # Run part of ACAS Xu
+    run_acasxu(cvc5) # Entire ACAS Xu
+    run_acasxu(cvc5, 3) # 3 hidden layers
+    run_acasxu(cvc5, 4) # 4 hidden layers
+
 if __name__ == '__main__':
     main()

@@ -3,6 +3,8 @@ from keras.layers import Dense
 from keras import activations
 import tensorflow as tf
 
+HIDDEN_LAYERS = 6
+
 def read_spec(library, filename= "acasxu/spec/prop_1.vnnlib"):
     file = open(filename)
     variable_dict = dict()
@@ -54,11 +56,13 @@ def read_spec(library, filename= "acasxu/spec/prop_1.vnnlib"):
     file.close()
     return (pre_list, post_list)
 
-def readNNet(filename: str) -> Sequential:
+def readNNet(filename: str, num_active_hidden_layers: int = HIDDEN_LAYERS) -> Sequential:
     """
     Return a DNN based on the information from the provided file
     Args:
         file (type: str): filename that provides information about NNet
+        num_active_hidden_layers (type: int): number of hidden layers included
+        in ACAS Xu DNN. By default, 6 hidden layers in total
     """
     file = open(filename)
 
@@ -82,19 +86,17 @@ def readNNet(filename: str) -> Sequential:
     file.readline()
 
     # Read the normalization information
-    line = file.readline()
-    inputMins = [float(x) for x in line.strip().split(",")[:-1]]
-
-    line = file.readline()
-    inputMaxes = [float(x) for x in line.strip().split(",")[:-1]]
-
-    line = file.readline()
-    means = [float(x) for x in line.strip().split(",")[:-1]]
-
-    line = file.readline()
-    ranges = [float(x) for x in line.strip().split(",")[:-1]]
+    line = file.readline() # Input min
+    line = file.readline() # Input max
+    line = file.readline() # Means
+    line = file.readline() # Ranges
 
     model = Sequential()
+
+    # A boolean list indicates which layer is taken into account
+    inactive_layers = HIDDEN_LAYERS - num_active_hidden_layers
+    is_active = [True] * (num_active_hidden_layers + 1) + [False] * inactive_layers + [True]
+
     for i in range(1, num_layers + 1):
         nodes = layers[i]
         prev_nodes = layers[i - 1]
@@ -104,13 +106,28 @@ def readNNet(filename: str) -> Sequential:
 
         for _ in range(nodes):
             line = file.readline()
+
+            # Skip inactive layer
+            if not is_active[i]:
+                continue
+
             weight_list = [float(x) for x in line.strip().split(",")[:-1]]
             for w in range(prev_nodes):
                 weights[w].append(weight_list[w])
 
         for _ in range(nodes):
             line = file.readline()
+
+            # Skip inactive layer
+            if not is_active[i]:
+                continue
+
             biases.append([float(line.strip().split(",")[0])])
+
+        # Skip inactive layer
+        if not is_active[i]:
+            continue
+
         if i == 1:
             dense = Dense(units = nodes,
                         input_shape = (num_inputs, ),

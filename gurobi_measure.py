@@ -2,6 +2,7 @@ import gurobipy as gp
 from keras.models import Sequential
 from keras.layers import Dense
 from symbolic_execution import create_random
+from acasxu import readNNet
 import time
 
 def get_info(layer: Dense):
@@ -113,7 +114,7 @@ def gurobi_generate_symbolic_execution(dnn: Sequential, model: gp.Model):
     return var_dict
 
 REPETITION = 5
-TIMEOUT = 2700 * 1000 # Set timeout of 45 minutes
+TIMEOUT = 2700 # Set timeout of 45 minutes
 
 def run_random(layers, interval = [-5, 5]):
     output_file = open("runtime.txt", "a")
@@ -165,6 +166,31 @@ def run_random(layers, interval = [-5, 5]):
 
     output_file.close()
 
+def run_acasxu(num_active_hidden_layers = None):
+    output_file = open("runtime.txt", "a")
+    output_file.write(f"library = gurobi, num_layers = {num_active_hidden_layers}, ACASXU\n")
+
+    if num_active_hidden_layers:
+        dnn = readNNet("acasxu/nnet/ACASXU_run2a_1_1_batch_2000.nnet", num_active_hidden_layers)
+    else:
+        dnn = readNNet("acasxu/nnet/ACASXU_run2a_1_1_batch_2000.nnet")
+
+    model = gp.Model()
+    model.Params.TimeLimit = TIMEOUT
+
+    var_dict = gurobi_generate_symbolic_execution(dnn, model)
+    gurobi_read_spec(var_dict, model)
+
+    # Solve
+    start = time.time()
+    model.optimize()
+    duration = time.time() - start
+
+    output_file.write(f"{duration}\n")
+    output_file.write("----------------------------\n\n")
+
+    output_file.close()
+
 def main():
     # Different number of nodes per layer
     run_random([5, 15, 15, 5])
@@ -179,6 +205,11 @@ def main():
 
     # Test hard
     run_random([5, 25, 25, 25, 25, 25, 25, 5])
+
+    # Run part of ACAS Xu
+    run_acasxu() # Entire ACAS Xu
+    run_acasxu(3) # 3 hidden layers
+    run_acasxu(4) # 4 hidden layers
 
 if __name__ == '__main__':
     main()
