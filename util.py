@@ -4,11 +4,11 @@ import time
 import cvc5.pythonic as cvc5
 import z3
 
-REPETITION = 5
+REPETITION = 3
 TIMEOUT = 2700 * 1000 # Set timeout of 45 minutes
 
 def run_random(library, layers, interval = [-5, 5]):
-    output_file = open("runtime.txt", "a")
+    output_file = open("runtime2.txt", "a")
     output_file.write(f"library = {library.__name__}, layers = {layers}, interval = {interval}\n")
     total = 0
     count = 0
@@ -24,7 +24,7 @@ def run_random(library, layers, interval = [-5, 5]):
         count += 1
         # Repeat the same random DNN to make sure the runtime doesn't vary too much
         runtimes = [duration]
-        for _ in range(4):
+        for _ in range(2):
             _, duration = solve_model(library, symbolic_expr)
             runtimes.append(duration)
 
@@ -37,7 +37,7 @@ def run_random(library, layers, interval = [-5, 5]):
     output_file.close()
 
 def run_acasxu(library, num_active_hidden_layers = None):
-    output_file = open("runtime.txt", "a")
+    output_file = open("runtime2.txt", "a")
     output_file.write(f"library = {library.__name__}, num_layers = {num_active_hidden_layers}, ACASXU\n")
 
     if num_active_hidden_layers:

@@ -1,5 +1,4 @@
 from dreal import *
-
 x = Variable("x")
 y = Variable("y")
 z = Variable("z")

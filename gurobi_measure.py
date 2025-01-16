@@ -113,11 +113,11 @@ def gurobi_generate_symbolic_execution(dnn: Sequential, model: gp.Model):
 
     return var_dict
 
-REPETITION = 5
-TIMEOUT = 2700 # Set timeout of 45 minutes
+REPETITION = 2
+TIMEOUT = 1800 # Set timeout of 45 minutes
 
 def run_random(layers, interval = [-5, 5]):
-    output_file = open("runtime.txt", "a")
+    output_file = open("runtime1.txt", "a")
     output_file.write(f"library = gurobi, layers = {layers}, interval = {interval}\n")
     total = 0
     count = 0
@@ -142,7 +142,7 @@ def run_random(layers, interval = [-5, 5]):
         count += 1
         # Repeat the same random DNN to make sure the runtime doesn't vary too much
         runtimes = [duration]
-        for _ in range(4):
+        for _ in range(2):
             # Prepare the gurobi model
             model = gp.Model()
             model.Params.TimeLimit = TIMEOUT
@@ -167,7 +167,7 @@ def run_random(layers, interval = [-5, 5]):
     output_file.close()
 
 def run_acasxu(num_active_hidden_layers = None):
-    output_file = open("runtime.txt", "a")
+    output_file = open("runtime1.txt", "a")
     output_file.write(f"library = gurobi, num_layers = {num_active_hidden_layers}, ACASXU\n")
 
     if num_active_hidden_layers:
@@ -193,23 +193,24 @@ def run_acasxu(num_active_hidden_layers = None):
 
 def main():
     # Different number of nodes per layer
-    run_random([5, 15, 15, 5])
-    run_random([5, 20, 20, 5])
-    run_random([5, 25, 25, 5])
+    run_random([5, 10, 10, 5])
+    # run_random([5, 15, 15, 5])
+    # run_random([5, 20, 20, 5])
+    # run_random([5, 25, 25, 5])
 
-    # Different number of layers
-    run_random([5, 8, 5])
-    run_random([5, 8, 8, 5])
-    run_random([5, 8, 8, 8, 5])
-    run_random([5, 25, 25, 25, 25, 5])
+    # # Different number of layers
+    # run_random([5, 8, 5])
+    # run_random([5, 8, 8, 5])
+    # run_random([5, 8, 8, 8, 5])
+    # run_random([5, 25, 25, 25, 25, 5])
 
     # Test hard
-    run_random([5, 25, 25, 25, 25, 25, 25, 5])
+    # run_random([5, 50, 50, 50, 50, 50, 5])
 
     # Run part of ACAS Xu
-    run_acasxu() # Entire ACAS Xu
-    run_acasxu(3) # 3 hidden layers
-    run_acasxu(4) # 4 hidden layers
+    # run_acasxu(3) # 3 hidden layers
+    # run_acasxu(4) # 4 hidden layers
+    # run_acasxu() # Entire ACAS Xu
 
 if __name__ == '__main__':
     main()
